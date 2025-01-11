@@ -32,11 +32,12 @@
 
             <!-- Search Section -->
             <div id="searchSection" style="margin-top: 20px;">
-                <label for="search_input">Search for a value:</label>
-                <input type="text" id="search_input" placeholder="Enter value to search">
+                <label for="search_input">Search for a Customer Number:</label>
+                <input type="text" id="search_input" placeholder="Enter customer number">
                 <button class="button" onclick="searchFiles()">Search</button>
                 <ul id="search_results" class="file-list"></ul>
             </div>
+            <p id="uploadStatus" style="display: none; color: green;">Files uploaded successfully!</p>
         </div>
     </main>
     <footer>
@@ -125,6 +126,7 @@
             });
         }
 
+        // Optimized search function
         function searchFiles() {
             const searchValue = document.getElementById('search_input').value.trim().toLowerCase();
             if (!searchValue) {
@@ -133,29 +135,55 @@
             }
 
             const searchResults = document.getElementById('search_results');
-            searchResults.innerHTML = '';
+            searchResults.innerHTML = ''; // Clear previous results
 
             selectedFiles.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const data = new Uint8Array(event.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
-                    
+
+                    // Search across sheets
+                    let found = false;
                     workbook.SheetNames.forEach(sheetName => {
+                        if (found) return; // Stop further checks if customer number is found
+
                         const sheet = workbook.Sheets[sheetName];
                         const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                        
+
                         jsonData.forEach((row, rowIndex) => {
                             if (row.some(cell => String(cell).toLowerCase().includes(searchValue))) {
                                 const li = document.createElement('li');
                                 li.textContent = `File: ${file.name}, Sheet: ${sheetName}, Row ${rowIndex + 1}: ${row.join(', ')}`;
                                 searchResults.appendChild(li);
+                                found = true; // Stop searching once found
                             }
                         });
                     });
                 };
                 reader.readAsArrayBuffer(file);
             });
+        }
+
+        // Upload Files with Notification
+        function uploadFiles() {
+            const progressBar = document.getElementById('progress_bar');
+            const uploadStatus = document.getElementById('uploadStatus');
+            let uploadProgress = 0;
+
+            // Simulate file upload progress
+            const interval = setInterval(() => {
+                uploadProgress += 10;
+                progressBar.style.width = `${uploadProgress}%`;
+
+                if (uploadProgress === 100) {
+                    clearInterval(interval);
+                    uploadStatus.style.display = 'block'; // Show success message
+                    setTimeout(() => {
+                        uploadStatus.style.display = 'none'; // Hide success message after 2 seconds
+                    }, 2000);
+                }
+            }, 500); // Simulate progress in steps
         }
     </script>
 </body>
