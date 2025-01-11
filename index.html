@@ -52,45 +52,25 @@
         .button:hover {
             background-color: #45a049;
         }
+        .input-container {
+            margin-bottom: 20px;
+        }
+        .input-container label {
+            font-size: 1em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .input-container input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
         #uploadSection {
             display: none;
             margin-top: 20px;
-        }
-        input[type="file"] {
-            margin: 10px 0;
-            padding: 10px;
-            width: 100%;
-            font-size: 1em;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background: #f9f9f9;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        .notice {
-            font-size: 0.9em;
-            color: #888;
-            margin-top: 10px;
-        }
-        .file-list {
-            margin: 20px 0;
-            list-style-type: none;
-            padding: 0;
-        }
-        .file-list li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 5px 0;
-            padding: 10px;
-            background: #f9f9f9;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        footer {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 0.9em;
-            color: #777;
         }
     </style>
 </head>
@@ -100,6 +80,12 @@
     </header>
     <main>
         <h1>Upload & Download Files Easily</h1>
+        <div class="input-container">
+            <label for="client_id_input">Enter Google API Client ID:</label>
+            <input type="text" id="client_id_input" placeholder="Enter your Client ID here">
+        </div>
+        <button id="initialize_button" class="button" onclick="initializeApp()">Initialize</button>
+
         <button id="authorize_button" class="button" style="display: none;" onclick="handleAuthClick()">Authorize Access</button>
         <button id="signout_button" class="button" style="display: none;" onclick="handleSignoutClick()">Sign Out</button>
 
@@ -108,7 +94,6 @@
             <input type="file" id="file_input" multiple accept=".xlsx, .xls" onchange="handleFileSelection()">
             <ul id="file_list" class="file-list"></ul>
             <button class="button" onclick="uploadFiles()">Upload Files</button>
-            <p class="notice">Note: Only Excel files (.xlsx, .xls) are allowed. You can select multiple files.</p>
             <button class="button" onclick="listFiles()">List & Download Files</button>
             <ul id="download_list" class="file-list"></ul>
         </div>
@@ -119,7 +104,7 @@
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
     <script>
-        const CLIENT_ID = 'YOUR_CLIENT_ID';
+        let CLIENT_ID = '';
         const API_KEY = 'YOUR_API_KEY';
         const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -142,19 +127,28 @@
         }
 
         function gisLoaded() {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: '',
-            });
             gisInited = true;
             maybeEnableButtons();
         }
 
         function maybeEnableButtons() {
-            if (gapiInited && gisInited) {
+            if (gapiInited && gisInited && CLIENT_ID) {
                 document.getElementById('authorize_button').style.display = 'block';
             }
+        }
+
+        function initializeApp() {
+            CLIENT_ID = document.getElementById('client_id_input').value.trim();
+            if (!CLIENT_ID) {
+                alert('Please enter a valid Client ID.');
+                return;
+            }
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: '',
+            });
+            maybeEnableButtons();
         }
 
         function handleAuthClick() {
